@@ -1,0 +1,208 @@
+const pool = require("../config/database");
+
+const getServers = async (req, res, next) => {
+  try {
+    const result = await pool.query(`
+      SELECT *
+      FROM servers
+      ORDER BY created_at DESC
+    `);
+
+    res.status(200).json({
+      success: true,
+      count: result.rowCount,
+      data: result.rows,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getServerById = async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      `
+        SELECT *
+        FROM servers
+        WHERE id = $1
+      `,
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Server not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: result.rows[0],
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const createServer = async (req, res, next) => {
+  const {
+    name,
+    hostname,
+    ipAddress,
+    provider,
+    environment,
+    operatingSystem,
+  } = req.body;
+
+  if (!name || !hostname || !ipAddress || !environment) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Name, hostname, IP address, and environment are required",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `
+        INSERT INTO servers (
+          name,
+          hostname,
+          ip_address,
+          provider,
+          environment,
+          operating_system
+        )
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *
+      `,
+      [
+        name,
+        hostname,
+        ipAddress,
+        provider || null,
+        environment,
+        operatingSystem || null,
+      ]
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "Server added successfully",
+      data: result.rows[0],
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateServerStatus = async (req, res, next) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const allowedStatuses = [
+    "online",
+    "offline",
+    "warning",
+    "maintenance",
+    "unknown",
+  ];
+
+  if (!allowedStatuses.includes(status)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid server status",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `
+        UPDATE servers
+        SET
+          status = $1,
+          last_checked_at = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2
+        RETURNING *
+      `,
+      [status, id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Server not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Server status updated",
+      data: result.rows[0],
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateServerMetrics = async (req, res, next) => {
+  const { id } = req.params;
+
+  const {
+    cpuUsage,
+    memoryUsage,
+    diskUsage,
+    uptimeSeconds,
+  } = req.body;
+
+  try {
+    const result = await pool.query(
+      `
+        UPDATE servers
+        SET
+          cpu_usage = $1,
+          memory_usage = $2,
+          disk_usage = $3,
+          uptime_seconds = $4,
+          last_checked_at = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $5
+        RETURNING *
+      `,
+      [
+        cpuUsage,
+        memoryUsage,
+        diskUsage,
+        uptimeSeconds,
+        id,
+      ]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Server not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Server metrics updated",
+      data: result.rows[0],
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  getServers,
+  getServerById,
+  createServer,
+  updateServerStatus,
+  updateServerMetrics,
+};

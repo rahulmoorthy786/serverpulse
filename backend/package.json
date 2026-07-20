@@ -1,0 +1,29 @@
+{
+  "name": "serverpulse-backend",
+  "version": "1.0.0",
+  "description": "Backend API for the ServerPulse infrastructure monitoring dashboard",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "postgresql",
+    "devops",
+    "monitoring"
+  ],
+  "author": "Rahul Thandavmoorthy",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.0.0",
+    "helmet": "^8.0.0",
+    "pg": "^8.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}

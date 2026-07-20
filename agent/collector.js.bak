@@ -1,0 +1,148 @@
+const os = require("os");
+const { execFile } = require("child_process");
+const { promisify } = require("util");
+
+const execFileAsync = promisify(execFile);
+
+const API_URL =
+  process.env.SERVERPULSE_API_URL ||
+  "http://127.0.0.1:5000/api/servers/1/metrics";
+
+const INTERVAL_SECONDS = Number(
+  process.env.COLLECTION_INTERVAL || 30
+);
+
+function sleep(milliseconds) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
+function readCpuTimes() {
+  return os.cpus().reduce(
+    (totals, cpu) => {
+      const times = cpu.times;
+
+      totals.idle += times.idle;
+      totals.total +=
+        times.user +
+        times.nice +
+        times.sys +
+        times.idle +
+        times.irq;
+
+      return totals;
+    },
+    {
+      idle: 0,
+      total: 0,
+    }
+  );
+}
+
+async function getCpuUsage() {
+  const first = readCpuTimes();
+
+  await sleep(1000);
+
+  const second = readCpuTimes();
+
+  const idleDifference = second.idle - first.idle;
+  const totalDifference = second.total - first.total;
+
+  if (totalDifference === 0) {
+    return 0;
+  }
+
+  return Number(
+    ((1 - idleDifference / totalDifference) * 100).toFixed(2)
+  );
+}
+
+function getMemoryUsage() {
+  const totalMemory = os.totalmem();
+  const usedMemory = totalMemory - os.freemem();
+
+  return Number(
+    ((usedMemory / totalMemory) * 100).toFixed(2)
+  );
+}
+
+async function getDiskUsage() {
+  const { stdout } = await execFileAsync("df", [
+    "-P",
+    "/",
+  ]);
+
+  const lines = stdout.trim().split("\n");
+  const diskLine = lines[lines.length - 1];
+  const columns = diskLine.trim().split(/\s+/);
+  const usage = columns[4];
+
+  return Number(usage.replace("%", ""));
+}
+
+async function collectMetrics() {
+  const [cpuUsage, diskUsage] = await Promise.all([
+    getCpuUsage(),
+    getDiskUsage(),
+  ]);
+  return {
+  cpuUsage,
+  memoryUsage: getMemoryUsage(),
+  diskUsage,
+  uptimeSeconds: Math.floor(os.uptime()),
+};
+}
+
+async function sendMetrics(metrics) {
+  const response = await fetch(API_URL, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(metrics),
+  });
+
+  if (!response.ok) {
+    const responseBody = await response.text();
+
+    throw new Error(
+      `API returned ${response.status}: ${responseBody}`
+    );
+  }
+
+  return response.json();
+}
+
+async function runCollector() {
+  console.log("ServerPulse agent started");
+  console.log(`API endpoint: ${API_URL}`);
+  console.log(
+    `Collection interval: ${INTERVAL_SECONDS} seconds`
+  );
+
+  while (true) {
+    try {
+      const metrics = await collectMetrics();
+      await sendMetrics(metrics);
+
+      console.log(
+        `[${new Date().toISOString()}]`,
+         `CPU ${metrics.cpu_usage}%`,
+	 `Memory ${metrics.memory_usage}%`,
+	 `Disk ${metrics.disk_usage}%`,
+	 `Uptime ${metrics.uptime_seconds}s`	
+      );
+    } catch (error) {
+      console.error(
+        `[${new Date().toISOString()}] Collection failed:`,
+        error.message
+      );
+    }
+
+    await sleep(INTERVAL_SECONDS * 1000);
+  }
+}
+
+runCollector();
