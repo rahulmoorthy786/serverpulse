@@ -1,6 +1,4 @@
-require("dotenv").config({
-  path: "../.env",
-});
+require("dotenv").config();
 
 const app = require("./app");
 const pool = require("./config/database");
@@ -11,13 +9,14 @@ const startServer = async () => {
   try {
     await pool.query("SELECT 1");
 
-    console.log("PostgreSQL connection established");
+    console.log("✅ PostgreSQL connection established");
 
-    app.listen(port, () => {
-      console.log(`ServerPulse backend running on port ${port}`);
+    app.listen(port, "0.0.0.0", () => {
+      console.log(`🚀 ServerPulse backend running on port ${port}`);
     });
   } catch (error) {
-    console.error("Unable to start ServerPulse:", error.message);
+    console.error("❌ Unable to start ServerPulse:");
+    console.error(error);
     process.exit(1);
   }
 };
