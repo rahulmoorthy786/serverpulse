@@ -23,15 +23,15 @@ function AlertsPanel({ serverId }) {
 
   const loadAlerts = useCallback(async () => {
     try {
-      setError("");
-
       const response = await getAlerts(filter);
 
       const serverAlerts = response.data.filter(
-        (alert) => Number(alert.server_id) === Number(serverId)
+        (alert) =>
+          Number(alert.server_id) === Number(serverId)
       );
 
       setAlerts(serverAlerts);
+      setError("");
     } catch (requestError) {
       console.error(requestError);
       setError("Unable to load alerts.");
@@ -41,12 +41,47 @@ function AlertsPanel({ serverId }) {
   }, [filter, serverId]);
 
   useEffect(() => {
-    loadAlerts();
+    let cancelled = false;
 
-    const interval = setInterval(loadAlerts, 30000);
+    const fetchAlerts = async () => {
+      try {
+        const response = await getAlerts(filter);
 
-    return () => clearInterval(interval);
-  }, [loadAlerts]);
+        if (cancelled) {
+          return;
+        }
+
+        const serverAlerts = response.data.filter(
+          (alert) =>
+            Number(alert.server_id) === Number(serverId)
+        );
+
+        setAlerts(serverAlerts);
+        setError("");
+      } catch (requestError) {
+        console.error(requestError);
+
+        if (!cancelled) {
+          setError("Unable to load alerts.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void fetchAlerts();
+
+    const intervalId = setInterval(() => {
+      void fetchAlerts();
+    }, 30000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [filter, serverId]);
 
   const handleAcknowledge = async (alertId) => {
     try {
@@ -94,7 +129,9 @@ function AlertsPanel({ serverId }) {
       )}
 
       {loading ? (
-        <div className="empty-state">Loading alerts...</div>
+        <div className="empty-state">
+          Loading alerts...
+        </div>
       ) : alerts.length === 0 ? (
         <div className="empty-state">
           No alerts found for this server.
