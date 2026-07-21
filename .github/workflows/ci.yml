@@ -4,7 +4,11 @@ name: CI
 
 on: 
     push:
-        branches: [main]
+      paths:
+      - '**'
+      - '!sub-project/docs/**'
+
+      branches: [main]
 
 jobs:
     frontend:
