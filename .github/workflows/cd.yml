@@ -4,11 +4,12 @@
 name: CD
 
 on: 
-    workflow_run: 
-        workflows: ['CI']
-        types: [completed]
-        branches: 
-            - 'feat/workflow'
+    # workflow_run: 
+    #     workflows: ['CI']
+    #     types: [completed]
+    #     branches: 
+    #         - 'feat/workflow'
+    workflow_dispatch: 
 
 jobs:
     deploy:
