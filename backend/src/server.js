@@ -12,6 +12,7 @@ const connectToDatabase = async (maxAttempts = 10) => {
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       await pool.query("SELECT 1");
+
       console.log("PostgreSQL connection established");
       return;
     } catch (error) {
