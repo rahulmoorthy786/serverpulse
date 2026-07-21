@@ -23,6 +23,12 @@ jobs:
                 cache: npm
                 cache-dependency-path:  backend/package-lock.json
 
+            - name: Check backend files
+              run: |
+                pwd
+                ls -la
+                ls -la package.json package-lock.json       
+
             - name: Install npm packages
               run: npm ci
 
