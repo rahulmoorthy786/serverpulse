@@ -5,32 +5,26 @@ export default defineConfig({
   plugins: [react()],
 
   server: {
-    host: "0.0.0.0",
-    port: 5173,
     proxy: {
       "/api": {
-        target: "http://backend:5000",
-        changeOrigin: true,
-      },
-      "/health": {
-        target: "http://backend:5000",
+        target: "http://localhost:5000",
         changeOrigin: true,
       },
     },
   },
 
   preview: {
-    host: "0.0.0.0",
-    port: 5173,
     proxy: {
       "/api": {
         target: "http://backend:5000",
         changeOrigin: true,
       },
-      "/health": {
-        target: "http://backend:5000",
-        changeOrigin: true,
-      },
     },
+  },
+
+  test: {
+    environment: "jsdom",
+    setupFiles: "./src/test/setup.js",
+    globals: true,
   },
 });
