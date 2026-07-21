@@ -17,32 +17,50 @@ function Dashboard() {
   const [error, setError] = useState("");
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [providerFilter, setProviderFilter] = useState("");
+  const [providerFilter, setProviderFilter] =
+    useState("");
   const [environmentFilter, setEnvironmentFilter] =
     useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-
-  const loadServers = async () => {
-    try {
-      setError("");
-
-      const response = await getServers();
-      setServers(response.data);
-    } catch (requestError) {
-      console.error(requestError);
-      setError("Unable to load server information.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [statusFilter, setStatusFilter] =
+    useState("");
 
   useEffect(() => {
-    loadServers();
+    let cancelled = false;
+
+    const loadServers = async () => {
+      try {
+        const response = await getServers();
+
+        if (!cancelled) {
+          setServers(response.data);
+          setError("");
+        }
+      } catch (requestError) {
+        console.error(requestError);
+
+        if (!cancelled) {
+          setError(
+            "Unable to load server information."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadServers();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleCreateServer = async (formData) => {
     try {
       setSubmitting(true);
+      setError("");
 
       const response = await createServer(formData);
 
@@ -52,6 +70,9 @@ function Dashboard() {
       ]);
 
       setShowForm(false);
+    } catch (requestError) {
+      console.error(requestError);
+      setError("Unable to create the server.");
     } finally {
       setSubmitting(false);
     }
@@ -63,17 +84,18 @@ function Dashboard() {
       .toLowerCase();
 
     return servers.filter((server) => {
+      const serverName =
+        server.name?.toLowerCase() ?? "";
+      const serverHostname =
+        server.hostname?.toLowerCase() ?? "";
+      const serverIpAddress =
+        server.ip_address?.toLowerCase() ?? "";
+
       const matchesSearch =
         !normalizedSearch ||
-        server.name
-          .toLowerCase()
-          .includes(normalizedSearch) ||
-        server.hostname
-          .toLowerCase()
-          .includes(normalizedSearch) ||
-        server.ip_address
-          .toLowerCase()
-          .includes(normalizedSearch);
+        serverName.includes(normalizedSearch) ||
+        serverHostname.includes(normalizedSearch) ||
+        serverIpAddress.includes(normalizedSearch);
 
       const matchesProvider =
         !providerFilter ||
@@ -117,8 +139,10 @@ function Dashboard() {
         <div className="dashboard-heading dashboard-heading-row">
           <div>
             <h2>Infrastructure Overview</h2>
+
             <p>
-              Monitor server health, status, and resource usage.
+              Monitor server health, status, and
+              resource usage.
             </p>
           </div>
 
@@ -171,23 +195,31 @@ function Dashboard() {
                 <select
                   value={providerFilter}
                   onChange={(event) =>
-                    setProviderFilter(event.target.value)
+                    setProviderFilter(
+                      event.target.value
+                    )
                   }
                 >
-                  <option value="">All providers</option>
+                  <option value="">
+                    All providers
+                  </option>
                   <option value="AWS">AWS</option>
                   <option value="Azure">Azure</option>
                   <option value="GCP">GCP</option>
                   <option value="DigitalOcean">
                     DigitalOcean
                   </option>
-                  <option value="On-Prem">On-Prem</option>
+                  <option value="On-Prem">
+                    On-Prem
+                  </option>
                 </select>
 
                 <select
                   value={environmentFilter}
                   onChange={(event) =>
-                    setEnvironmentFilter(event.target.value)
+                    setEnvironmentFilter(
+                      event.target.value
+                    )
                   }
                 >
                   <option value="">
@@ -207,17 +239,29 @@ function Dashboard() {
                 <select
                   value={statusFilter}
                   onChange={(event) =>
-                    setStatusFilter(event.target.value)
+                    setStatusFilter(
+                      event.target.value
+                    )
                   }
                 >
-                  <option value="">All statuses</option>
-                  <option value="online">Online</option>
-                  <option value="warning">Warning</option>
-                  <option value="offline">Offline</option>
+                  <option value="">
+                    All statuses
+                  </option>
+                  <option value="online">
+                    Online
+                  </option>
+                  <option value="warning">
+                    Warning
+                  </option>
+                  <option value="offline">
+                    Offline
+                  </option>
                   <option value="maintenance">
                     Maintenance
                   </option>
-                  <option value="unknown">Unknown</option>
+                  <option value="unknown">
+                    Unknown
+                  </option>
                 </select>
               </div>
 
@@ -237,7 +281,9 @@ function Dashboard() {
               </div>
             </section>
 
-            <ServerTable servers={filteredServers} />
+            <ServerTable
+              servers={filteredServers}
+            />
           </>
         )}
       </main>
