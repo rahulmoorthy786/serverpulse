@@ -16,12 +16,12 @@ jobs:
             - name: Setup NodeJs
               uses: actions/setup-node@v7
               with: 
-                node-version: '20'
+                node-version: '24'
                 cache: npm
                 cache-dependency-path:  frontend/package-lock.json
 
             - name: Install npm packages
-              run: npm install
+              run: npm ci
               working-directory: frontend
 
             - name: Run Linter
@@ -29,7 +29,8 @@ jobs:
               working-directory: frontend
               
             - name: Run Test
-              run: npm run test  
+              run: npm run test
+              working-directory: frontend
 
 
 
