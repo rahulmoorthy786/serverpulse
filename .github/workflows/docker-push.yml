@@ -26,7 +26,7 @@ jobs:
               uses: docker/build-push-action@v7
               with:
                 context: ${{ matrix.folders }}
-                file: ${{ matrix.folders }}/Dockerfile
+                file: ./${{ matrix.folders }}
                 push: true
                 tags: ${{ vars.DOCKERHUB_USERNAME }}/serverpulse-${{ matrix.folders }}:latest        
 
