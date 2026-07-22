@@ -14,4 +14,8 @@ jobs:
 
     secret-scanning:
         uses: ./.github/workflows/secret-scanning.yml 
+
+    dependency-scan:
+        uses: ./.github/workflows/dependency-scan.yml
+    
         

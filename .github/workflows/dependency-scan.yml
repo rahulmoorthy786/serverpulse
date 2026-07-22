@@ -8,17 +8,25 @@ on:
 jobs:
     dependency-scan:
         runs-on: ubuntu-latest
+        strategy:
+          fail-fast: false  
+          matrix:
+            directory: [frontend,backend]
         steps:
-            - name: Codew Checkout
+            - name: Code Checkout
               uses: actions/checkout@v7
               
             - name: Setup NodeJs
               uses: actions/setup-node@v7
               with: 
                 node-version: '24'
+                cache: npm
+                cache-dependency-path:  ${{ matrix.directory }}/spackage-lock.json
 
             - name: Install Dependencies
               run: npm ci
+              working-directory: ${{ matrix.directory }}
 
             - name: Run NPM Audit
-              run: npm audit --audit-level=high  
+              run: npm audit --audit-level=high
+              working-directory: ${{ matrix.directory }}
