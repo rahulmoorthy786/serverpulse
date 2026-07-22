@@ -1,10 +1,10 @@
 # Goal To deploy the build images from CI steps once the CI workflow is succeeded.
 
 
-name: CD
+name: Deploy
 
 on: 
-    workflow_dispatch:  
+    workflow_call:   
 
 jobs:
     deploy:
