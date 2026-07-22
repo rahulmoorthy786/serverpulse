@@ -1,0 +1,38 @@
+# Goal: Build the Image for ServerPulse Frontend and Push to Docker Hub.
+
+name: docker Push
+
+on: 
+    workflow_call:  
+
+jobs:
+    frontend:
+        runs-on: ubuntu-latest
+        strategy:
+          fail-fast: false  
+          matrix:
+            folders: ['frontend','backend']
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4   
+                    
+            - name: Docker Setup 
+              uses: docker/login-action@v4
+              with:
+                username: ${{ vars.DOCKERHUB_USERNAME }}
+                password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+            - name: Docker Build and Push
+              uses: docker/build-push-action@v7
+              with:
+                context: ${{ matrix.folders }}
+                file: ${{ matrix.folders }}/Dockerfile
+                push: true
+                tags: ${{ vars.DOCKERHUB_USERNAME }}/serverpulse-${{ matrix.folders }}:latest        
+
+            
+                  
+  
+
+
+
