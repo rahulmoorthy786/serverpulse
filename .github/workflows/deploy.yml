@@ -11,7 +11,7 @@ jobs:
         runs-on: self-hosted
         steps:
             - name: Code CHeckout
-              uses: actions/checkout@v7
+              uses: actions/checkout@v4
             
             - name: Copy Env to to main env
               run: cp .env.example .env
@@ -25,6 +25,5 @@ jobs:
                 
             - name: Deploy the containers with Docker compose 
               run: |
-                 docker compose build --no-cache backend frontend
+                 docker compose pull 
                  docker compose up -d --force-recreate --remove-orphans
-
