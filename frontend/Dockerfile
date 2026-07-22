@@ -1,29 +1,21 @@
-# Builder stage
-
+# Build frontend
 FROM node:24-alpine AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
-
-RUN npm ci 
+RUN npm ci
 
 COPY . .
 
-RUN npm run build 
+RUN npm run build
 
-# Runner stage
 
-FROM node:24-alpine AS runner
+# Serve static frontend
+FROM nginx:alpine
 
-WORKDIR /app
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-COPY --from=builder /app/dist  ./dist
-COPY --from=builder /app/package*.json  ./
-COPY --from=builder /app/vite.config.js ./vite.config.js
+EXPOSE 80
 
-RUN npm ci 
-
-EXPOSE 5173
-
-CMD ["npm","run","preview","--","--host","0.0.0.0","--port","5173"]
+CMD ["nginx", "-g", "daemon off;"]
